@@ -15,8 +15,9 @@ class BurgerCatchGame extends FlameGame with HasCollisionDetection {
   bool isRunning = false;
 
   double _spawnTimer = 0;
-  double _spawnInterval = 1.5;
+  double _spawnInterval = 0.8;
   double fallSpeed = 150.0;
+  bool _preSpawnDone = false;
 
   late TrayComponent _tray;
   final Random _random = Random();
@@ -43,8 +44,9 @@ class BurgerCatchGame extends FlameGame with HasCollisionDetection {
     score = 0;
     timeRemaining = 30.0;
     _spawnTimer = 0;
-    _spawnInterval = 1.5;
+    _spawnInterval = 0.8;
     fallSpeed = 150.0;
+    _preSpawnDone = false;
     isRunning = true;
 
     children.whereType<FallingItemComponent>().toList().forEach((c) => c.removeFromParent());
@@ -58,6 +60,20 @@ class BurgerCatchGame extends FlameGame with HasCollisionDetection {
     super.update(dt);
     if (!isRunning) return;
 
+    if (!_preSpawnDone) {
+      _preSpawnDone = true;
+      const margin = 30.0;
+      for (int i = 0; i < 3; i++) {
+        final x = margin + _random.nextDouble() * (size.x - margin * 2);
+        final startY = size.y * (i + 1) * 0.2;
+        add(FallingItemComponent(
+          type: FallingItemComponent.randomType(),
+          startX: x,
+          startY: startY,
+        ));
+      }
+    }
+
     final prevSec = timeRemaining.ceil();
     timeRemaining -= dt;
     if (timeRemaining <= 0) {
@@ -69,7 +85,7 @@ class BurgerCatchGame extends FlameGame with HasCollisionDetection {
 
     // Ramp difficulty
     final elapsed = 30.0 - timeRemaining;
-    _spawnInterval = (1.5 - elapsed * 0.025).clamp(0.5, 1.5);
+    _spawnInterval = (0.8 - elapsed * 0.015).clamp(0.4, 0.8);
     fallSpeed = (150.0 + elapsed * 8).clamp(150.0, 400.0);
 
     // Spawn items

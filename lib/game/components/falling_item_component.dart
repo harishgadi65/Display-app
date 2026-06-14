@@ -24,13 +24,13 @@ class FallingItemComponent extends PositionComponent
   bool _caught = false;
   Sprite? _sprite;
 
-  FallingItemComponent({required this.type, required double startX})
+  FallingItemComponent({required this.type, required double startX, double? startY})
       : super(
           size: Vector2.all(_itemSize),
           anchor: Anchor.center,
         ) {
     x = startX;
-    y = -_itemSize;
+    y = startY ?? -_itemSize;
   }
 
   static FoodType randomType() {
@@ -58,7 +58,7 @@ class FallingItemComponent extends PositionComponent
     super.update(dt);
     if (_caught) return;
     y += game.fallSpeed * dt;
-    if (y > game.size.y + _itemSize) removeFromParent();
+    if (y > game.size.y + _itemSize / 2) removeFromParent();
   }
 
   @override
