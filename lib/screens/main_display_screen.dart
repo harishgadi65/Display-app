@@ -9,6 +9,7 @@ import '../services/content_service.dart';
 import '../services/websocket_server.dart';
 import '../widgets/qr_overlay_widget.dart';
 import 'game_mode_screen.dart';
+import 'screen_two.dart';
 import 'demo_setup/demo_setup_screen.dart';
 
 class MainDisplayScreen extends StatefulWidget {
@@ -29,6 +30,7 @@ class _MainDisplayScreenState extends State<MainDisplayScreen> {
   VideoPlayerController? _videoController;
   VideoPlayerController? _bgVideoController;
   Timer? _contentTimer;
+  Timer? _screenTimer;
   StreamSubscription? _wsSub;
   int _cornerTapCount = 0;
   Timer? _cornerTapTimer;
@@ -50,6 +52,7 @@ class _MainDisplayScreenState extends State<MainDisplayScreen> {
     _startContent();
     _listenWebSocket();
     await _initBackgroundVideo();
+    _screenTimer = Timer(const Duration(seconds: 15), _enterScreenTwo);
   }
 
   Future<void> _initBackgroundVideo() async {
@@ -135,6 +138,19 @@ class _MainDisplayScreenState extends State<MainDisplayScreen> {
     );
   }
 
+  void _enterScreenTwo() {
+    if (!mounted) return;
+    Navigator.pushReplacement(
+      context,
+      PageRouteBuilder(
+        pageBuilder: (_, __, ___) => const ScreenTwo(),
+        transitionsBuilder: (_, anim, __, child) =>
+            FadeTransition(opacity: anim, child: child),
+        transitionDuration: const Duration(milliseconds: 600),
+      ),
+    );
+  }
+
   void _onCornerTap() {
     _cornerTapTimer?.cancel();
     _cornerTapCount++;
@@ -156,6 +172,7 @@ class _MainDisplayScreenState extends State<MainDisplayScreen> {
     _bgVideoController?.dispose();
     _videoController?.dispose();
     _contentTimer?.cancel();
+    _screenTimer?.cancel();
     _wsSub?.cancel();
     _wsServer.stop();
     super.dispose();
