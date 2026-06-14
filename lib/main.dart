@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'screens/main_display_screen.dart';
@@ -6,8 +7,8 @@ void main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
   await SystemChrome.setPreferredOrientations([
-    DeviceOrientation.landscapeLeft,
-    DeviceOrientation.landscapeRight,
+    DeviceOrientation.portraitUp,
+    DeviceOrientation.portraitDown,
   ]);
 
   SystemChrome.setEnabledSystemUIMode(SystemUiMode.immersiveSticky);
@@ -33,6 +34,17 @@ class BlinkBoardApp extends StatelessWidget {
         scaffoldBackgroundColor: const Color(0xFF050516),
         useMaterial3: true,
       ),
+      builder: kIsWeb
+          ? (context, child) => Scaffold(
+                backgroundColor: Colors.black,
+                body: Center(
+                  child: AspectRatio(
+                    aspectRatio: 9 / 16,
+                    child: child!,
+                  ),
+                ),
+              )
+          : null,
       home: const MainDisplayScreen(),
     );
   }
