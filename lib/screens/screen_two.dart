@@ -65,8 +65,8 @@ class _ScreenTwoState extends State<ScreenTwo> {
                     ),
                     Expanded(
                       child: Container(
-                        color: const Color(0xFFFF9800),
-                        padding: const EdgeInsets.all(12),
+                        color: Colors.black,
+                        padding: const EdgeInsets.all(3),
                         child: Container(
                           color: Colors.white,
                           child: GameWidget(
