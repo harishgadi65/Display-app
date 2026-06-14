@@ -9,8 +9,10 @@ class BurgerCatchGame extends FlameGame with HasCollisionDetection {
   void Function(int score) onGameOver;
   void Function(int score) onScoreUpdate;
   void Function(double timeRemaining) onTimerTick;
+  VoidCallback? onCountUpdate;
 
   int score = 0;
+  int caughtCount = 0;
   double timeRemaining = 30.0;
   bool isRunning = false;
 
@@ -42,6 +44,7 @@ class BurgerCatchGame extends FlameGame with HasCollisionDetection {
 
   void startGame() {
     score = 0;
+    caughtCount = 0;
     timeRemaining = 30.0;
     _spawnTimer = 0;
     _spawnInterval = 0.8;
@@ -53,6 +56,7 @@ class BurgerCatchGame extends FlameGame with HasCollisionDetection {
     overlays.remove('gameOver');
     if (!overlays.isActive('hud')) overlays.add('hud');
     onScoreUpdate(0);
+    onCountUpdate?.call();
   }
 
   @override
@@ -63,13 +67,11 @@ class BurgerCatchGame extends FlameGame with HasCollisionDetection {
     if (!_preSpawnDone) {
       _preSpawnDone = true;
       const margin = 30.0;
-      for (int i = 0; i < 3; i++) {
+      for (int i = 0; i < 2; i++) {
         final x = margin + _random.nextDouble() * (size.x - margin * 2);
-        final startY = size.y * (i + 1) * 0.2;
         add(FallingItemComponent(
           type: FallingItemComponent.randomType(),
           startX: x,
-          startY: startY,
         ));
       }
     }
@@ -104,7 +106,9 @@ class BurgerCatchGame extends FlameGame with HasCollisionDetection {
 
   void addScore(int points) {
     score += points;
+    caughtCount++;
     onScoreUpdate(score);
+    onCountUpdate?.call();
   }
 
   void _endGame() {

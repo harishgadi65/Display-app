@@ -137,6 +137,7 @@ class _HudOverlayState extends State<_HudOverlay> {
     super.initState();
     widget.game.onScoreUpdate = (_) => setState(() {});
     widget.game.onTimerTick = (_) => setState(() {});
+    widget.game.onCountUpdate = () => setState(() {});
   }
 
   @override
@@ -157,7 +158,7 @@ class _HudOverlayState extends State<_HudOverlay> {
               borderRadius: BorderRadius.circular(12),
             ),
             child: Text(
-              '🍔 ${widget.game.score}',
+              '🍔 x${widget.game.caughtCount}',
               style: const TextStyle(
                 color: Colors.white,
                 fontWeight: FontWeight.w900,
@@ -255,86 +256,97 @@ class _GameOverOverlay extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      color: Colors.black.withOpacity(0.82),
+      color: Colors.black.withOpacity(0.88),
       child: Center(
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            const Text('🎉', style: TextStyle(fontSize: 48)),
-            const SizedBox(height: 6),
-            const Text(
-              'Congratulations!',
-              style: TextStyle(
-                color: Colors.white,
-                fontSize: 20,
-                fontWeight: FontWeight.w900,
-                letterSpacing: 1,
-              ),
-            ),
-            const SizedBox(height: 10),
-            Text(
-              '${game.score}',
-              style: const TextStyle(
-                color: Color(0xFFFFD700),
-                fontSize: 52,
-                fontWeight: FontWeight.w900,
-              ),
-            ),
-            const Text(
-              'POINTS',
-              style: TextStyle(
-                color: Colors.white54,
-                fontSize: 13,
-                letterSpacing: 3,
-              ),
-            ),
-            const SizedBox(height: 16),
-
-            // Coupon placeholder
-            Container(
-              width: 180,
-              padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 16),
-              decoration: BoxDecoration(
-                color: Colors.orange.shade700,
-                borderRadius: BorderRadius.circular(14),
-                border: Border.all(color: Colors.white38, width: 1.5),
-              ),
-              child: const Column(
-                children: [
-                  Text('🎫 YOUR REWARD',
-                      style: TextStyle(
-                          color: Colors.white,
-                          fontWeight: FontWeight.w900,
-                          fontSize: 13,
-                          letterSpacing: 1.5)),
-                  SizedBox(height: 4),
-                  Text('Scan QR to claim',
-                      style: TextStyle(color: Colors.white70, fontSize: 11)),
-                ],
-              ),
-            ),
-            const SizedBox(height: 16),
-
-            // Play Again
-            GestureDetector(
-              onTap: onPlayAgain,
-              child: Container(
-                padding: const EdgeInsets.symmetric(horizontal: 28, vertical: 12),
-                decoration: BoxDecoration(
-                  color: Colors.orange,
-                  borderRadius: BorderRadius.circular(24),
+        child: Container(
+          width: 220,
+          padding: const EdgeInsets.symmetric(vertical: 24, horizontal: 20),
+          decoration: BoxDecoration(
+            color: const Color(0xFF1A1A2E),
+            borderRadius: BorderRadius.circular(20),
+            border: Border.all(color: Colors.orange.shade700, width: 2),
+          ),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              const Text('🍔', style: TextStyle(fontSize: 36)),
+              const SizedBox(height: 4),
+              const Text(
+                'GAME OVER',
+                style: TextStyle(
+                  color: Colors.white,
+                  fontSize: 18,
+                  fontWeight: FontWeight.w900,
+                  letterSpacing: 2,
                 ),
-                child: const Text(
-                  '▶  Play Again',
-                  style: TextStyle(
-                    color: Colors.white,
-                    fontWeight: FontWeight.w900,
-                    fontSize: 16,
+              ),
+              const SizedBox(height: 16),
+              const Divider(color: Colors.orange, thickness: 1),
+              const SizedBox(height: 12),
+
+              // Burgers caught — primary stat
+              const Text(
+                'Burgers Caught',
+                style: TextStyle(color: Colors.white60, fontSize: 12, letterSpacing: 1),
+              ),
+              const SizedBox(height: 4),
+              Text(
+                '${game.caughtCount}',
+                style: const TextStyle(
+                  color: Color(0xFFFFD700),
+                  fontSize: 56,
+                  fontWeight: FontWeight.w900,
+                  height: 1,
+                ),
+              ),
+              const SizedBox(height: 12),
+
+              // Total score — secondary stat
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                decoration: BoxDecoration(
+                  color: Colors.white10,
+                  borderRadius: BorderRadius.circular(10),
+                ),
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    const Text('Total Score',
+                        style: TextStyle(color: Colors.white60, fontSize: 12)),
+                    Text('${game.score}',
+                        style: const TextStyle(
+                            color: Colors.white,
+                            fontSize: 16,
+                            fontWeight: FontWeight.w900)),
+                  ],
+                ),
+              ),
+              const SizedBox(height: 20),
+
+              // Play Again
+              GestureDetector(
+                onTap: onPlayAgain,
+                child: Container(
+                  width: double.infinity,
+                  padding: const EdgeInsets.symmetric(vertical: 12),
+                  decoration: BoxDecoration(
+                    color: Colors.orange,
+                    borderRadius: BorderRadius.circular(24),
+                  ),
+                  child: const Center(
+                    child: Text(
+                      '▶  Play Again',
+                      style: TextStyle(
+                        color: Colors.white,
+                        fontWeight: FontWeight.w900,
+                        fontSize: 15,
+                      ),
+                    ),
                   ),
                 ),
               ),
-            ),
-          ],
+            ],
+          ),
         ),
       ),
     );
