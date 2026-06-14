@@ -1,5 +1,6 @@
 import 'dart:async';
 import 'dart:io';
+import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter/material.dart';
 import 'package:video_player/video_player.dart';
 import 'package:flutter_animate/flutter_animate.dart';
@@ -7,7 +8,6 @@ import '../models/content_item.dart';
 import '../services/content_service.dart';
 import '../services/websocket_server.dart';
 import '../widgets/qr_overlay_widget.dart';
-import '../widgets/animated_cta_widget.dart';
 import 'game_mode_screen.dart';
 import 'demo_setup/demo_setup_screen.dart';
 
@@ -27,6 +27,7 @@ class _MainDisplayScreenState extends State<MainDisplayScreen> {
   List<ContentItem> _items = [];
   int _currentIndex = 0;
   VideoPlayerController? _videoController;
+  VideoPlayerController? _bgVideoController;
   Timer? _contentTimer;
   StreamSubscription? _wsSub;
   int _cornerTapCount = 0;
@@ -48,6 +49,28 @@ class _MainDisplayScreenState extends State<MainDisplayScreen> {
     });
     _startContent();
     _listenWebSocket();
+    await _initBackgroundVideo();
+  }
+
+  Future<void> _initBackgroundVideo() async {
+    _bgVideoController = kIsWeb
+        ? VideoPlayerController.networkUrl(
+            Uri.parse('videos/background_video.mp4'),
+          )
+        : VideoPlayerController.asset('assets/videos/Background video.mp4');
+    await _bgVideoController!.initialize();
+    await _bgVideoController!.setVolume(0);
+    _bgVideoController!.addListener(_onBgVideoProgress);
+    await _bgVideoController!.play();
+    if (mounted) setState(() {});
+  }
+
+  void _onBgVideoProgress() {
+    final ctrl = _bgVideoController;
+    if (ctrl == null || !ctrl.value.isInitialized) return;
+    if (ctrl.value.position >= const Duration(seconds: 8)) {
+      ctrl.seekTo(Duration.zero);
+    }
   }
 
   void _listenWebSocket() {
@@ -130,6 +153,7 @@ class _MainDisplayScreenState extends State<MainDisplayScreen> {
 
   @override
   void dispose() {
+    _bgVideoController?.dispose();
     _videoController?.dispose();
     _contentTimer?.cancel();
     _wsSub?.cancel();
@@ -153,6 +177,18 @@ class _MainDisplayScreenState extends State<MainDisplayScreen> {
   }
 
   Widget _buildBackground() {
+    if (_bgVideoController?.value.isInitialized == true) {
+      return SizedBox.expand(
+        child: FittedBox(
+          fit: BoxFit.cover,
+          child: SizedBox(
+            width: _bgVideoController!.value.size.width,
+            height: _bgVideoController!.value.size.height,
+            child: VideoPlayer(_bgVideoController!),
+          ),
+        ),
+      );
+    }
     return Container(
       decoration: const BoxDecoration(
         gradient: LinearGradient(
@@ -165,33 +201,7 @@ class _MainDisplayScreenState extends State<MainDisplayScreen> {
   }
 
   Widget _buildContent() {
-    if (_items.isEmpty) {
-      return Center(
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            const Icon(Icons.play_circle_outline, color: Color(0xFF00E5FF), size: 80),
-            const SizedBox(height: 16),
-            const Text(
-              'BLINK BOARD',
-              style: TextStyle(
-                color: Color(0xFF00E5FF),
-                fontSize: 48,
-                fontWeight: FontWeight.w900,
-                letterSpacing: 8,
-              ),
-            )
-                .animate(onPlay: (c) => c.repeat(reverse: true))
-                .shimmer(duration: 2.seconds, color: Colors.white.withOpacity(0.4)),
-            const SizedBox(height: 8),
-            const Text(
-              'Add content via Demo Setup (tap corner 5×)',
-              style: TextStyle(color: Colors.white38, fontSize: 16),
-            ),
-          ],
-        ),
-      );
-    }
+    if (_items.isEmpty) return const SizedBox.shrink();
 
     final item = _items[_currentIndex];
     if (item.type == ContentType.image) {
@@ -214,88 +224,14 @@ class _MainDisplayScreenState extends State<MainDisplayScreen> {
 
   Widget _buildOverlay() {
     return SafeArea(
-      child: Column(
-        children: [
-          _buildTopBrand(),
-          const Spacer(),
-          const AnimatedCtaWidget(),
-          const SizedBox(height: 16),
-          QrOverlayWidget(data: _qrData.isEmpty ? 'https://blinkboard.app' : _qrData),
-          if (_deviceIp != null)
-            Padding(
-              padding: const EdgeInsets.only(top: 6, bottom: 16),
-              child: Text(
-                'Connected on $_deviceIp',
-                style: const TextStyle(color: Colors.white24, fontSize: 11),
-              ),
-            )
-          else
-            const SizedBox(height: 24),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildTopBrand() {
-    return Padding(
-      padding: const EdgeInsets.all(20),
-      child: Row(
-        children: [
-          Text(
-            'BLINK',
-            style: TextStyle(
-              color: const Color(0xFF00E5FF),
-              fontSize: 28,
-              fontWeight: FontWeight.w900,
-              letterSpacing: 4,
-              shadows: [
-                Shadow(
-                  color: const Color(0xFF00E5FF).withOpacity(0.6),
-                  blurRadius: 16,
-                ),
-              ],
-            ),
-          )
-              .animate(onPlay: (c) => c.repeat(reverse: true))
-              .shimmer(duration: 3.seconds, color: Colors.white.withOpacity(0.3)),
-          const Text(
-            ' BOARD',
-            style: TextStyle(
-              color: Colors.white,
-              fontSize: 28,
-              fontWeight: FontWeight.w300,
-              letterSpacing: 4,
-            ),
+      child: Align(
+        alignment: Alignment.bottomCenter,
+        child: Padding(
+          padding: const EdgeInsets.only(bottom: 32),
+          child: QrOverlayWidget(
+            data: _qrData.isEmpty ? 'https://blinkboard.app' : _qrData,
           ),
-          const Spacer(),
-          Container(
-            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-            decoration: BoxDecoration(
-              color: Colors.black38,
-              borderRadius: BorderRadius.circular(20),
-              border: Border.all(color: const Color(0xFF00E5FF).withOpacity(0.3)),
-            ),
-            child: Row(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Container(
-                  width: 8,
-                  height: 8,
-                  decoration: const BoxDecoration(
-                    color: Color(0xFF00FF88),
-                    shape: BoxShape.circle,
-                  ),
-                )
-                    .animate(onPlay: (c) => c.repeat(reverse: true))
-                    .fadeIn(duration: 800.ms)
-                    .then()
-                    .fadeOut(duration: 800.ms),
-                const SizedBox(width: 6),
-                const Text('LIVE', style: TextStyle(color: Colors.white54, fontSize: 12)),
-              ],
-            ),
-          ),
-        ],
+        ),
       ),
     );
   }

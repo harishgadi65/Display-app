@@ -10,7 +10,7 @@ class QrOverlayWidget extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
+      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
       decoration: BoxDecoration(
         color: Colors.black.withOpacity(0.7),
         borderRadius: BorderRadius.circular(20),
@@ -35,40 +35,42 @@ class QrOverlayWidget extends StatelessWidget {
             child: QrImageView(
               data: data,
               version: QrVersions.auto,
-              size: 100,
+              size: 82,
               backgroundColor: Colors.white,
             ),
           ),
-          const SizedBox(width: 16),
-          Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(
-                'Scan to Play',
-                style: TextStyle(
-                  color: const Color(0xFF00E5FF),
-                  fontSize: 22,
-                  fontWeight: FontWeight.bold,
-                  letterSpacing: 1.2,
-                  shadows: [
-                    Shadow(
-                      color: const Color(0xFF00E5FF).withOpacity(0.8),
-                      blurRadius: 10,
-                    ),
-                  ],
+          const SizedBox(width: 12),
+          Flexible(
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  'Scan to Play',
+                  style: TextStyle(
+                    color: const Color(0xFF00E5FF),
+                    fontSize: 18,
+                    fontWeight: FontWeight.bold,
+                    letterSpacing: 1.0,
+                    shadows: [
+                      Shadow(
+                        color: const Color(0xFF00E5FF).withOpacity(0.8),
+                        blurRadius: 10,
+                      ),
+                    ],
+                  ),
                 ),
-              ),
-              const SizedBox(height: 4),
-              const Text(
-                '& Win Rewards',
-                style: TextStyle(
-                  color: Colors.white,
-                  fontSize: 18,
-                  fontWeight: FontWeight.w500,
+                const SizedBox(height: 4),
+                const Text(
+                  '& Win Rewards',
+                  style: TextStyle(
+                    color: Colors.white,
+                    fontSize: 15,
+                    fontWeight: FontWeight.w500,
+                  ),
                 ),
-              ),
-            ],
+              ],
+            ),
           ),
         ],
       ),
