@@ -210,7 +210,7 @@ class _HudOverlayState extends State<_HudOverlay> {
                       BoxShadow(color: Colors.black26, blurRadius: 4, offset: Offset(0, 2))
                     ],
                   ),
-                  child: const Icon(Icons.arrow_back_ios_new, color: Colors.white, size: 18),
+                  child: const Center(child: Text('<', style: TextStyle(color: Colors.white, fontSize: 20, fontWeight: FontWeight.bold))),
                 ),
               ),
               const SizedBox(width: 24),
@@ -228,7 +228,7 @@ class _HudOverlayState extends State<_HudOverlay> {
                       BoxShadow(color: Colors.black26, blurRadius: 4, offset: Offset(0, 2))
                     ],
                   ),
-                  child: const Icon(Icons.arrow_forward_ios, color: Colors.white, size: 18),
+                  child: const Center(child: Text('>', style: TextStyle(color: Colors.white, fontSize: 20, fontWeight: FontWeight.bold))),
                 ),
               ),
             ],
