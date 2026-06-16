@@ -367,7 +367,7 @@ class _GameOverOverlayState extends State<_GameOverOverlay> {
       child: Center(
         child: Container(
           width: 220,
-          padding: const EdgeInsets.symmetric(vertical: 16, horizontal: 20),
+          padding: const EdgeInsets.fromLTRB(20, 1, 20, 16),
           decoration: BoxDecoration(
             color: const Color(0xFF1A1A2E),
             borderRadius: BorderRadius.circular(20),
@@ -387,7 +387,7 @@ class _GameOverOverlayState extends State<_GameOverOverlay> {
                   letterSpacing: 2,
                 ),
               ),
-              const SizedBox(height: 16),
+              const SizedBox(height: 4),
               const Divider(color: Colors.orange, thickness: 1),
               const SizedBox(height: 12),
 
@@ -396,17 +396,17 @@ class _GameOverOverlayState extends State<_GameOverOverlay> {
                 'Burgers Caught',
                 style: TextStyle(color: Colors.white60, fontSize: 12, letterSpacing: 1),
               ),
-              const SizedBox(height: 4),
+              const SizedBox(height: 2),
               Text(
                 '${widget.game.caughtCount}',
                 style: const TextStyle(
                   color: Color(0xFFFFD700),
-                  fontSize: 48,
+                  fontSize: 40,
                   fontWeight: FontWeight.w900,
                   height: 1,
                 ),
               ),
-              const SizedBox(height: 8),
+              const SizedBox(height: 4),
 
               // Total score
               Container(
