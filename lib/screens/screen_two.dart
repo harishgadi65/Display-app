@@ -67,26 +67,50 @@ class _ScreenTwoState extends State<ScreenTwo> {
                       child: Container(
                         color: Colors.black,
                         padding: const EdgeInsets.all(3),
-                        child: Container(
-                          color: Colors.white,
-                          child: GameWidget(
-                            game: _game,
-                            overlayBuilderMap: {
-                              'hud': (ctx, game) => _HudOverlay(
-                                    game: game as BurgerCatchGame,
-                                    onLeft: () => _game.startMoveLeft(),
-                                    onLeftUp: () => _game.stopMoveLeft(),
-                                    onRight: () => _game.startMoveRight(),
-                                    onRightUp: () => _game.stopMoveRight(),
+                        child: Stack(
+                          children: [
+                            Positioned.fill(
+                              child: Container(
+                                color: Colors.white,
+                                child: GameWidget(
+                                  game: _game,
+                                  overlayBuilderMap: {
+                                    'hud': (ctx, game) => _HudOverlay(
+                                          game: game as BurgerCatchGame,
+                                        ),
+                                    'gameOver': (ctx, game) => _GameOverOverlay(
+                                          game: game as BurgerCatchGame,
+                                          onPlayAgain: _restartGame,
+                                          onExit: _returnToScreenOne,
+                                        ),
+                                  },
+                                  initialActiveOverlays: const ['hud'],
+                                ),
+                              ),
+                            ),
+                            // Buttons live outside GameWidget — reliable pointer events on web
+                            Positioned(
+                              bottom: 6,
+                              left: 0,
+                              right: 0,
+                              child: Row(
+                                mainAxisAlignment: MainAxisAlignment.center,
+                                children: [
+                                  _NavButton(
+                                    label: '<',
+                                    onPress: () => _game.startMoveLeft(),
+                                    onRelease: () => _game.stopMoveLeft(),
                                   ),
-                              'gameOver': (ctx, game) => _GameOverOverlay(
-                                    game: game as BurgerCatchGame,
-                                    onPlayAgain: _restartGame,
-                                    onExit: _returnToScreenOne,
+                                  const SizedBox(width: 24),
+                                  _NavButton(
+                                    label: '>',
+                                    onPress: () => _game.startMoveRight(),
+                                    onRelease: () => _game.stopMoveRight(),
                                   ),
-                            },
-                            initialActiveOverlays: const ['hud'],
-                          ),
+                                ],
+                              ),
+                            ),
+                          ],
                         ),
                       ),
                     ),
@@ -110,22 +134,57 @@ class _ScreenTwoState extends State<ScreenTwo> {
   }
 }
 
-// ── HUD overlay ──────────────────────────────────────────────────────────────
+// ── Nav button (outside GameWidget for reliable web pointer events) ───────────
+
+class _NavButton extends StatelessWidget {
+  final String label;
+  final VoidCallback onPress;
+  final VoidCallback onRelease;
+
+  const _NavButton({
+    required this.label,
+    required this.onPress,
+    required this.onRelease,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Listener(
+      behavior: HitTestBehavior.opaque,
+      onPointerDown: (_) => onPress(),
+      onPointerUp: (_) => onRelease(),
+      onPointerCancel: (_) => onRelease(),
+      child: Container(
+        width: 52,
+        height: 36,
+        decoration: BoxDecoration(
+          color: Colors.orange.shade700,
+          borderRadius: BorderRadius.circular(10),
+          boxShadow: const [
+            BoxShadow(color: Colors.black26, blurRadius: 4, offset: Offset(0, 2))
+          ],
+        ),
+        child: Center(
+          child: Text(
+            label,
+            style: const TextStyle(
+              color: Colors.white,
+              fontSize: 20,
+              fontWeight: FontWeight.bold,
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+// ── HUD overlay (score + timer only) ─────────────────────────────────────────
 
 class _HudOverlay extends StatefulWidget {
   final BurgerCatchGame game;
-  final VoidCallback onLeft;
-  final VoidCallback onLeftUp;
-  final VoidCallback onRight;
-  final VoidCallback onRightUp;
 
-  const _HudOverlay({
-    required this.game,
-    required this.onLeft,
-    required this.onLeftUp,
-    required this.onRight,
-    required this.onRightUp,
-  });
+  const _HudOverlay({required this.game});
 
   @override
   State<_HudOverlay> createState() => _HudOverlayState();
@@ -135,9 +194,17 @@ class _HudOverlayState extends State<_HudOverlay> {
   @override
   void initState() {
     super.initState();
-    widget.game.onScoreUpdate = (_) => setState(() {});
-    widget.game.onTimerTick = (_) => setState(() {});
-    widget.game.onCountUpdate = () => setState(() {});
+    widget.game.onScoreUpdate = (_) { if (mounted) setState(() {}); };
+    widget.game.onTimerTick = (_) { if (mounted) setState(() {}); };
+    widget.game.onCountUpdate = () { if (mounted) setState(() {}); };
+  }
+
+  @override
+  void dispose() {
+    widget.game.onScoreUpdate = (_) {};
+    widget.game.onTimerTick = (_) {};
+    widget.game.onCountUpdate = null;
+    super.dispose();
   }
 
   @override
@@ -186,53 +253,6 @@ class _HudOverlayState extends State<_HudOverlay> {
                 fontSize: 15,
               ),
             ),
-          ),
-        ),
-
-        // Control buttons
-        Positioned(
-          bottom: 6,
-          left: 0,
-          right: 0,
-          child: Row(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              GestureDetector(
-                onTapDown: (_) => widget.onLeft(),
-                onTapUp: (_) => widget.onLeftUp(),
-                onTapCancel: widget.onLeftUp,
-                child: Container(
-                  width: 52,
-                  height: 36,
-                  decoration: BoxDecoration(
-                    color: Colors.orange.shade700,
-                    borderRadius: BorderRadius.circular(10),
-                    boxShadow: const [
-                      BoxShadow(color: Colors.black26, blurRadius: 4, offset: Offset(0, 2))
-                    ],
-                  ),
-                  child: const Center(child: Text('<', style: TextStyle(color: Colors.white, fontSize: 20, fontWeight: FontWeight.bold))),
-                ),
-              ),
-              const SizedBox(width: 24),
-              GestureDetector(
-                onTapDown: (_) => widget.onRight(),
-                onTapUp: (_) => widget.onRightUp(),
-                onTapCancel: widget.onRightUp,
-                child: Container(
-                  width: 52,
-                  height: 36,
-                  decoration: BoxDecoration(
-                    color: Colors.orange.shade700,
-                    borderRadius: BorderRadius.circular(10),
-                    boxShadow: const [
-                      BoxShadow(color: Colors.black26, blurRadius: 4, offset: Offset(0, 2))
-                    ],
-                  ),
-                  child: const Center(child: Text('>', style: TextStyle(color: Colors.white, fontSize: 20, fontWeight: FontWeight.bold))),
-                ),
-              ),
-            ],
           ),
         ),
       ],

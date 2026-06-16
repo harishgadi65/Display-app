@@ -1,5 +1,4 @@
 import 'dart:ui';
-import 'package:flame/collisions.dart';
 import 'package:flame/components.dart';
 import '../burger_catch_game.dart';
 
@@ -20,7 +19,6 @@ class TrayComponent extends PositionComponent
     await super.onLoad();
     position = Vector2(game.size.x / 2, game.size.y - 50);
     _sprite = await Sprite.load('basket.png');
-    add(RectangleHitbox());
   }
 
   @override

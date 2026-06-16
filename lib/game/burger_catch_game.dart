@@ -2,10 +2,11 @@ import 'dart:math';
 import 'package:flame/components.dart';
 import 'package:flame/game.dart';
 import 'package:flutter/material.dart';
+import 'components/catch_effect_component.dart';
 import 'components/falling_item_component.dart';
 import 'components/tray_component.dart';
 
-class BurgerCatchGame extends FlameGame with HasCollisionDetection {
+class BurgerCatchGame extends FlameGame {
   void Function(int score) onGameOver;
   void Function(int score) onScoreUpdate;
   void Function(double timeRemaining) onTimerTick;
@@ -16,10 +17,9 @@ class BurgerCatchGame extends FlameGame with HasCollisionDetection {
   double timeRemaining = 30.0;
   bool isRunning = false;
 
-  double _spawnTimer = 0;
-  double _spawnInterval = 0.8;
   double fallSpeed = 150.0;
-  bool _preSpawnDone = false;
+  bool _waitingForBurger = false;
+  late Sprite _burgerSprite;
 
   late TrayComponent _tray;
   final Random _random = Random();
@@ -36,8 +36,9 @@ class BurgerCatchGame extends FlameGame with HasCollisionDetection {
   @override
   Future<void> onLoad() async {
     await super.onLoad();
+    _burgerSprite = await Sprite.load('burgar.png');
     _tray = TrayComponent();
-    add(_tray);
+    await add(_tray);
     overlays.add('hud');
     startGame();
   }
@@ -46,10 +47,8 @@ class BurgerCatchGame extends FlameGame with HasCollisionDetection {
     score = 0;
     caughtCount = 0;
     timeRemaining = 30.0;
-    _spawnTimer = 0;
-    _spawnInterval = 0.8;
     fallSpeed = 150.0;
-    _preSpawnDone = false;
+    _waitingForBurger = false;
     isRunning = true;
 
     children.whereType<FallingItemComponent>().toList().forEach((c) => c.removeFromParent());
@@ -64,18 +63,6 @@ class BurgerCatchGame extends FlameGame with HasCollisionDetection {
     super.update(dt);
     if (!isRunning) return;
 
-    if (!_preSpawnDone) {
-      _preSpawnDone = true;
-      const margin = 30.0;
-      for (int i = 0; i < 2; i++) {
-        final x = margin + _random.nextDouble() * (size.x - margin * 2);
-        add(FallingItemComponent(
-          type: FallingItemComponent.randomType(),
-          startX: x,
-        ));
-      }
-    }
-
     final prevSec = timeRemaining.ceil();
     timeRemaining -= dt;
     if (timeRemaining <= 0) {
@@ -85,23 +72,46 @@ class BurgerCatchGame extends FlameGame with HasCollisionDetection {
     }
     if (timeRemaining.ceil() != prevSec) onTimerTick(timeRemaining);
 
-    // Ramp difficulty
     final elapsed = 30.0 - timeRemaining;
-    _spawnInterval = (0.8 - elapsed * 0.015).clamp(0.4, 0.8);
     fallSpeed = (150.0 + elapsed * 8).clamp(150.0, 400.0);
 
-    // Spawn items
-    _spawnTimer += dt;
-    if (_spawnTimer >= _spawnInterval) {
-      _spawnTimer = 0;
-      _spawnItem();
+    // Detect bottom-edge miss and tray catch
+    for (final burger in children.whereType<FallingItemComponent>().toList()) {
+      if (burger.isCaught) continue;
+
+      if (burger.y + burger.size.y / 2 >= size.y) {
+        burger.removeFromParent();
+        continue;
+      }
+
+      if (burger.overlapsWithTray(_tray)) {
+        burger.markCaught();
+        addScore(burger.type.points);
+        add(CatchEffectComponent(points: burger.type.points, position: burger.position.clone()));
+      }
+    }
+
+    // Spawn next burger if none is active and we haven't already queued one
+    final hasBurger = children
+        .whereType<FallingItemComponent>()
+        .any((b) => !b.isCaught);
+    if (!hasBurger && !_waitingForBurger) {
+      _waitingForBurger = true;
+      _spawnNext();
+    } else if (hasBurger) {
+      _waitingForBurger = false;
     }
   }
 
-  void _spawnItem() {
-    final margin = 30.0;
+  void _spawnNext() {
+    if (!isRunning) return;
+    const margin = 30.0;
     final x = margin + _random.nextDouble() * (size.x - margin * 2);
-    add(FallingItemComponent(type: FallingItemComponent.randomType(), startX: x));
+    add(FallingItemComponent(
+      type: FallingItemComponent.randomType(),
+      startX: x,
+      sprite: _burgerSprite,
+    ));
   }
 
   void addScore(int points) {

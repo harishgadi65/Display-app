@@ -29,11 +29,6 @@ class CatchEffectComponent extends TextComponent {
       MoveByEffect(
         Vector2(0, -50),
         EffectController(duration: 0.8, curve: Curves.easeOut),
-      ),
-    );
-    add(
-      OpacityEffect.fadeOut(
-        EffectController(duration: 0.8),
         onComplete: removeFromParent,
       ),
     );
