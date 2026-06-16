@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'package:flame/game.dart';
 import 'package:flutter/material.dart';
 import '../game/burger_catch_game.dart';
@@ -14,6 +15,10 @@ class ScreenTwo extends StatefulWidget {
 class _ScreenTwoState extends State<ScreenTwo> {
   late BurgerCatchGame _game;
 
+  bool _preGameCountdown = false;
+  int _preGameCount = 3;
+  Timer? _preGameTimer;
+
   @override
   void initState() {
     super.initState();
@@ -23,7 +28,28 @@ class _ScreenTwoState extends State<ScreenTwo> {
     );
   }
 
-  void _restartGame() => _game.startGame();
+  @override
+  void dispose() {
+    _preGameTimer?.cancel();
+    super.dispose();
+  }
+
+  void _restartGame() {
+    setState(() {
+      _preGameCountdown = true;
+      _preGameCount = 3;
+    });
+    _preGameTimer?.cancel();
+    _preGameTimer = Timer.periodic(const Duration(seconds: 1), (_) {
+      if (!mounted) { _preGameTimer?.cancel(); return; }
+      setState(() => _preGameCount--);
+      if (_preGameCount <= 0) {
+        _preGameTimer?.cancel();
+        setState(() => _preGameCountdown = false);
+        _game.startGame();
+      }
+    });
+  }
 
   void _returnToScreenOne() {
     if (!mounted) return;
@@ -88,7 +114,7 @@ class _ScreenTwoState extends State<ScreenTwo> {
                                 ),
                               ),
                             ),
-                            // Buttons live outside GameWidget — reliable pointer events on web
+                            // Nav buttons outside GameWidget for reliable web pointer events
                             Positioned(
                               bottom: 6,
                               left: 0,
@@ -110,6 +136,31 @@ class _ScreenTwoState extends State<ScreenTwo> {
                                 ],
                               ),
                             ),
+                            // 3-2-1 pre-game countdown overlay
+                            if (_preGameCountdown)
+                              Positioned.fill(
+                                child: Container(
+                                  color: Colors.black.withOpacity(0.75),
+                                  child: Center(
+                                    child: AnimatedSwitcher(
+                                      duration: const Duration(milliseconds: 250),
+                                      transitionBuilder: (child, anim) => ScaleTransition(
+                                        scale: anim,
+                                        child: FadeTransition(opacity: anim, child: child),
+                                      ),
+                                      child: Text(
+                                        _preGameCount > 0 ? '$_preGameCount' : 'GO!',
+                                        key: ValueKey(_preGameCount),
+                                        style: const TextStyle(
+                                          color: Colors.white,
+                                          fontSize: 96,
+                                          fontWeight: FontWeight.w900,
+                                        ),
+                                      ),
+                                    ),
+                                  ),
+                                ),
+                              ),
                           ],
                         ),
                       ),
@@ -134,7 +185,7 @@ class _ScreenTwoState extends State<ScreenTwo> {
   }
 }
 
-// ── Nav button (outside GameWidget for reliable web pointer events) ───────────
+// ── Nav button ────────────────────────────────────────────────────────────────
 
 class _NavButton extends StatelessWidget {
   final String label;
@@ -179,7 +230,7 @@ class _NavButton extends StatelessWidget {
   }
 }
 
-// ── HUD overlay (score + timer only) ─────────────────────────────────────────
+// ── HUD overlay (score + timer) ───────────────────────────────────────────────
 
 class _HudOverlay extends StatefulWidget {
   final BurgerCatchGame game;
@@ -214,7 +265,6 @@ class _HudOverlayState extends State<_HudOverlay> {
 
     return Stack(
       children: [
-        // Score
         Positioned(
           top: 8,
           left: 10,
@@ -234,8 +284,6 @@ class _HudOverlayState extends State<_HudOverlay> {
             ),
           ),
         ),
-
-        // Timer
         Positioned(
           top: 8,
           right: 10,
@@ -260,9 +308,9 @@ class _HudOverlayState extends State<_HudOverlay> {
   }
 }
 
-// ── Game Over overlay ─────────────────────────────────────────────────────────
+// ── Game Over overlay (with 10-second auto-return countdown) ─────────────────
 
-class _GameOverOverlay extends StatelessWidget {
+class _GameOverOverlay extends StatefulWidget {
   final BurgerCatchGame game;
   final VoidCallback onPlayAgain;
   final VoidCallback onExit;
@@ -274,13 +322,52 @@ class _GameOverOverlay extends StatelessWidget {
   });
 
   @override
+  State<_GameOverOverlay> createState() => _GameOverOverlayState();
+}
+
+class _GameOverOverlayState extends State<_GameOverOverlay> {
+  int _countdown = 10;
+  Timer? _timer;
+  bool _navigated = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _timer = Timer.periodic(const Duration(seconds: 1), (_) {
+      if (!mounted) return;
+      setState(() => _countdown--);
+      if (_countdown <= 0) _autoExit();
+    });
+  }
+
+  void _autoExit() {
+    if (_navigated) return;
+    _navigated = true;
+    _timer?.cancel();
+    widget.onExit();
+  }
+
+  void _onPlayAgain() {
+    if (_navigated) return;
+    _navigated = true;
+    _timer?.cancel();
+    widget.onPlayAgain();
+  }
+
+  @override
+  void dispose() {
+    _timer?.cancel();
+    super.dispose();
+  }
+
+  @override
   Widget build(BuildContext context) {
     return Container(
       color: Colors.black.withOpacity(0.88),
       child: Center(
         child: Container(
           width: 220,
-          padding: const EdgeInsets.symmetric(vertical: 24, horizontal: 20),
+          padding: const EdgeInsets.symmetric(vertical: 16, horizontal: 20),
           decoration: BoxDecoration(
             color: const Color(0xFF1A1A2E),
             borderRadius: BorderRadius.circular(20),
@@ -304,24 +391,24 @@ class _GameOverOverlay extends StatelessWidget {
               const Divider(color: Colors.orange, thickness: 1),
               const SizedBox(height: 12),
 
-              // Burgers caught — primary stat
+              // Burgers caught
               const Text(
                 'Burgers Caught',
                 style: TextStyle(color: Colors.white60, fontSize: 12, letterSpacing: 1),
               ),
               const SizedBox(height: 4),
               Text(
-                '${game.caughtCount}',
+                '${widget.game.caughtCount}',
                 style: const TextStyle(
                   color: Color(0xFFFFD700),
-                  fontSize: 56,
+                  fontSize: 48,
                   fontWeight: FontWeight.w900,
                   height: 1,
                 ),
               ),
-              const SizedBox(height: 12),
+              const SizedBox(height: 8),
 
-              // Total score — secondary stat
+              // Total score
               Container(
                 padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
                 decoration: BoxDecoration(
@@ -333,7 +420,7 @@ class _GameOverOverlay extends StatelessWidget {
                   children: [
                     const Text('Total Score',
                         style: TextStyle(color: Colors.white60, fontSize: 12)),
-                    Text('${game.score}',
+                    Text('${widget.game.score}',
                         style: const TextStyle(
                             color: Colors.white,
                             fontSize: 16,
@@ -341,11 +428,31 @@ class _GameOverOverlay extends StatelessWidget {
                   ],
                 ),
               ),
-              const SizedBox(height: 20),
+              const SizedBox(height: 8),
 
-              // Play Again
+              // Auto-return countdown number
+              AnimatedSwitcher(
+                duration: const Duration(milliseconds: 300),
+                transitionBuilder: (child, animation) => ScaleTransition(
+                  scale: animation,
+                  child: FadeTransition(opacity: animation, child: child),
+                ),
+                child: Text(
+                  '$_countdown',
+                  key: ValueKey(_countdown),
+                  style: const TextStyle(
+                    color: Colors.white,
+                    fontSize: 44,
+                    fontWeight: FontWeight.w900,
+                    height: 1,
+                  ),
+                ),
+              ),
+              const SizedBox(height: 8),
+
+              // Play Again button
               GestureDetector(
-                onTap: onPlayAgain,
+                onTap: _onPlayAgain,
                 child: Container(
                   width: double.infinity,
                   padding: const EdgeInsets.symmetric(vertical: 12),
