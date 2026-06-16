@@ -73,7 +73,7 @@ class BurgerCatchGame extends FlameGame {
     if (timeRemaining.ceil() != prevSec) onTimerTick(timeRemaining);
 
     final elapsed = 30.0 - timeRemaining;
-    fallSpeed = (150.0 + elapsed * 8).clamp(150.0, 400.0);
+    fallSpeed = (75.0 + elapsed * 3).clamp(75.0, 200.0);
 
     // Detect bottom-edge miss and tray catch
     for (final burger in children.whereType<FallingItemComponent>().toList()) {
