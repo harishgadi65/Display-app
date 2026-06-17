@@ -32,6 +32,7 @@ class _MainDisplayScreenState extends State<MainDisplayScreen> {
   Timer? _contentTimer;
   Timer? _screenTimer;
   StreamSubscription? _wsSub;
+  bool _showStartButton = false;
   int _cornerTapCount = 0;
   Timer? _cornerTapTimer;
 
@@ -52,7 +53,7 @@ class _MainDisplayScreenState extends State<MainDisplayScreen> {
     _startContent();
     _listenWebSocket();
     await _initBackgroundVideo();
-    _screenTimer = Timer(const Duration(seconds: 15), _enterScreenTwo);
+    _screenTimer = Timer(const Duration(seconds: 15), _onTimerElapsed);
   }
 
   Future<void> _initBackgroundVideo() async {
@@ -138,6 +139,11 @@ class _MainDisplayScreenState extends State<MainDisplayScreen> {
     );
   }
 
+  void _onTimerElapsed() {
+    if (!mounted) return;
+    setState(() => _showStartButton = true);
+  }
+
   void _enterScreenTwo() {
     if (!mounted) return;
     Navigator.pushReplacement(
@@ -187,6 +193,7 @@ class _MainDisplayScreenState extends State<MainDisplayScreen> {
           _buildBackground(),
           _buildContent(),
           _buildOverlay(),
+          _buildStartButton(),
           _buildCornerTapTarget(),
         ],
       ),
@@ -247,6 +254,43 @@ class _MainDisplayScreenState extends State<MainDisplayScreen> {
           padding: const EdgeInsets.only(bottom: 32),
           child: QrOverlayWidget(
             data: _qrData.isEmpty ? 'https://blinkboard.app' : _qrData,
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildStartButton() {
+    return Positioned.fill(
+      child: Align(
+        alignment: Alignment.center,
+        child: AnimatedOpacity(
+          opacity: _showStartButton ? 1.0 : 0.0,
+          duration: const Duration(milliseconds: 500),
+          child: IgnorePointer(
+            ignoring: !_showStartButton,
+            child: GestureDetector(
+              onTap: _enterScreenTwo,
+              child: Container(
+                padding: const EdgeInsets.symmetric(horizontal: 36, vertical: 14),
+                decoration: BoxDecoration(
+                  color: Colors.orange,
+                  borderRadius: BorderRadius.circular(32),
+                  boxShadow: const [
+                    BoxShadow(color: Colors.black38, blurRadius: 12, offset: Offset(0, 4)),
+                  ],
+                ),
+                child: const Text(
+                  '▶  Start',
+                  style: TextStyle(
+                    color: Colors.white,
+                    fontSize: 20,
+                    fontWeight: FontWeight.w900,
+                    letterSpacing: 1,
+                  ),
+                ),
+              ),
+            ),
           ),
         ),
       ),
