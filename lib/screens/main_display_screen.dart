@@ -30,9 +30,8 @@ class _MainDisplayScreenState extends State<MainDisplayScreen> {
   VideoPlayerController? _videoController;
   VideoPlayerController? _bgVideoController;
   Timer? _contentTimer;
-  Timer? _screenTimer;
   StreamSubscription? _wsSub;
-  bool _showStartButton = false;
+  bool _showStartButton = true;
   int _cornerTapCount = 0;
   Timer? _cornerTapTimer;
 
@@ -53,7 +52,6 @@ class _MainDisplayScreenState extends State<MainDisplayScreen> {
     _startContent();
     _listenWebSocket();
     await _initBackgroundVideo();
-    _screenTimer = Timer(const Duration(seconds: 15), _onTimerElapsed);
   }
 
   Future<void> _initBackgroundVideo() async {
@@ -139,11 +137,6 @@ class _MainDisplayScreenState extends State<MainDisplayScreen> {
     );
   }
 
-  void _onTimerElapsed() {
-    if (!mounted) return;
-    setState(() => _showStartButton = true);
-  }
-
   void _enterScreenTwo() {
     if (!mounted) return;
     Navigator.pushReplacement(
@@ -178,7 +171,6 @@ class _MainDisplayScreenState extends State<MainDisplayScreen> {
     _bgVideoController?.dispose();
     _videoController?.dispose();
     _contentTimer?.cancel();
-    _screenTimer?.cancel();
     _wsSub?.cancel();
     _wsServer.stop();
     super.dispose();
