@@ -88,12 +88,16 @@ class _TopBarVideoPlayerState extends State<TopBarVideoPlayer> {
     }
 
     if (_videoController?.value.isInitialized == true) {
-      return FittedBox(
-        fit: BoxFit.cover,
-        child: SizedBox(
-          width: _videoController!.value.size.width,
-          height: _videoController!.value.size.height,
-          child: VideoPlayer(_videoController!),
+      return ClipRect(
+        child: SizedBox.expand(
+          child: FittedBox(
+            fit: BoxFit.cover,
+            child: SizedBox(
+              width: _videoController!.value.size.width,
+              height: _videoController!.value.size.height,
+              child: VideoPlayer(_videoController!),
+            ),
+          ),
         ),
       );
     }

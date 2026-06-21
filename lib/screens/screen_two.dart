@@ -2,7 +2,9 @@ import 'dart:async';
 import 'package:flame/game.dart';
 import 'package:flutter/material.dart';
 import '../game/burger_catch_game.dart';
-import '../widgets/ad_panel_widget.dart';
+import '../models/content_item.dart';
+import '../services/panel_video_service.dart';
+import '../widgets/panel_video_player.dart';
 import '../widgets/top_bar_video_player.dart';
 import 'main_display_screen.dart';
 
@@ -88,7 +90,15 @@ class _ScreenTwoState extends State<ScreenTwo> {
                   children: [
                     SizedBox(
                       width: adW,
-                      child: const AdPanelWidget(startOffset: 1),
+                      child: PanelVideoPlayer(
+                        service: PanelVideoService('screen2_left', defaultItem: ContentItem(
+                          id: 'left_1',
+                          path: r'D:\Claude Projects\left side.mp4',
+                          type: ContentType.video,
+                          name: 'left side.mp4',
+                          webUrl: 'videos/left_side.mp4',
+                        )),
+                      ),
                     ),
                     Expanded(
                       child: Container(
@@ -168,7 +178,15 @@ class _ScreenTwoState extends State<ScreenTwo> {
                     ),
                     SizedBox(
                       width: adW,
-                      child: const AdPanelWidget(startOffset: 2),
+                      child: PanelVideoPlayer(
+                        service: PanelVideoService('screen2_right', defaultItem: ContentItem(
+                          id: 'right_1',
+                          path: r'D:\Claude Projects\right side.mp4',
+                          type: ContentType.video,
+                          name: 'right side.mp4',
+                          webUrl: 'videos/right_side.mp4',
+                        )),
+                      ),
                     ),
                   ],
                 ),
@@ -176,7 +194,15 @@ class _ScreenTwoState extends State<ScreenTwo> {
               SizedBox(
                 height: adH,
                 width: double.infinity,
-                child: const AdPanelWidget(startOffset: 3),
+                child: PanelVideoPlayer(
+                  service: PanelVideoService('screen2_bottom', defaultItem: ContentItem(
+                    id: 'bottom_1',
+                    path: r'D:\Claude Projects\Botom.mp4',
+                    type: ContentType.video,
+                    name: 'Botom.mp4',
+                    webUrl: 'videos/bottom.mp4',
+                  )),
+                ),
               ),
             ],
           );
