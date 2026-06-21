@@ -31,7 +31,6 @@ class _MainDisplayScreenState extends State<MainDisplayScreen> {
   VideoPlayerController? _bgVideoController;
   Timer? _contentTimer;
   StreamSubscription? _wsSub;
-  bool _showStartButton = true;
   int _cornerTapCount = 0;
   Timer? _cornerTapTimer;
 
@@ -185,7 +184,6 @@ class _MainDisplayScreenState extends State<MainDisplayScreen> {
           _buildBackground(),
           _buildContent(),
           _buildOverlay(),
-          _buildStartButton(),
           _buildCornerTapTarget(),
         ],
       ),
@@ -246,43 +244,7 @@ class _MainDisplayScreenState extends State<MainDisplayScreen> {
           padding: const EdgeInsets.only(bottom: 32),
           child: QrOverlayWidget(
             data: _qrData.isEmpty ? 'https://blinkboard.app' : _qrData,
-          ),
-        ),
-      ),
-    );
-  }
-
-  Widget _buildStartButton() {
-    return Positioned.fill(
-      child: Align(
-        alignment: Alignment.center,
-        child: AnimatedOpacity(
-          opacity: _showStartButton ? 1.0 : 0.0,
-          duration: const Duration(milliseconds: 500),
-          child: IgnorePointer(
-            ignoring: !_showStartButton,
-            child: GestureDetector(
-              onTap: _enterScreenTwo,
-              child: Container(
-                padding: const EdgeInsets.symmetric(horizontal: 36, vertical: 14),
-                decoration: BoxDecoration(
-                  color: Colors.orange,
-                  borderRadius: BorderRadius.circular(32),
-                  boxShadow: const [
-                    BoxShadow(color: Colors.black38, blurRadius: 12, offset: Offset(0, 4)),
-                  ],
-                ),
-                child: const Text(
-                  '▶  Start',
-                  style: TextStyle(
-                    color: Colors.white,
-                    fontSize: 20,
-                    fontWeight: FontWeight.w900,
-                    letterSpacing: 1,
-                  ),
-                ),
-              ),
-            ),
+            onStart: _enterScreenTwo,
           ),
         ),
       ),

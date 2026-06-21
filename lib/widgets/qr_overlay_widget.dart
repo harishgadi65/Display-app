@@ -4,8 +4,9 @@ import 'package:flutter_animate/flutter_animate.dart';
 
 class QrOverlayWidget extends StatelessWidget {
   final String data;
+  final VoidCallback? onStart;
 
-  const QrOverlayWidget({super.key, required this.data});
+  const QrOverlayWidget({super.key, required this.data, this.onStart});
 
   @override
   Widget build(BuildContext context) {
@@ -60,15 +61,39 @@ class QrOverlayWidget extends StatelessWidget {
                     ],
                   ),
                 ),
-                const SizedBox(height: 4),
-                const Text(
-                  '& Win Rewards',
-                  style: TextStyle(
-                    color: Colors.white,
-                    fontSize: 15,
-                    fontWeight: FontWeight.w500,
+                const SizedBox(height: 6),
+                if (onStart != null)
+                  GestureDetector(
+                    onTap: onStart,
+                    child: Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 6),
+                      decoration: BoxDecoration(
+                        color: Colors.orange,
+                        borderRadius: BorderRadius.circular(20),
+                        boxShadow: const [
+                          BoxShadow(color: Colors.black38, blurRadius: 8, offset: Offset(0, 3)),
+                        ],
+                      ),
+                      child: const Text(
+                        '▶  Start',
+                        style: TextStyle(
+                          color: Colors.white,
+                          fontSize: 13,
+                          fontWeight: FontWeight.w800,
+                          letterSpacing: 1,
+                        ),
+                      ),
+                    ),
+                  )
+                else
+                  const Text(
+                    '& Win Rewards',
+                    style: TextStyle(
+                      color: Colors.white,
+                      fontSize: 15,
+                      fontWeight: FontWeight.w500,
+                    ),
                   ),
-                ),
               ],
             ),
           ),

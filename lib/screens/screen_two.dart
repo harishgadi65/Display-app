@@ -3,6 +3,7 @@ import 'package:flame/game.dart';
 import 'package:flutter/material.dart';
 import '../game/burger_catch_game.dart';
 import '../widgets/ad_panel_widget.dart';
+import '../widgets/top_bar_video_player.dart';
 import 'main_display_screen.dart';
 
 class ScreenTwo extends StatefulWidget {
@@ -80,7 +81,7 @@ class _ScreenTwoState extends State<ScreenTwo> {
               SizedBox(
                 height: adH,
                 width: double.infinity,
-                child: const AdPanelWidget(startOffset: 0),
+                child: const TopBarVideoPlayer(),
               ),
               Expanded(
                 child: Row(

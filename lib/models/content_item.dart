@@ -8,6 +8,7 @@ class ContentItem {
   final ContentType type;
   final String name;
   bool isSelected;
+  final String? webUrl;
 
   ContentItem({
     required this.id,
@@ -15,6 +16,7 @@ class ContentItem {
     required this.type,
     required this.name,
     this.isSelected = true,
+    this.webUrl,
   });
 
   Map<String, dynamic> toJson() => {
@@ -23,6 +25,7 @@ class ContentItem {
         'type': type.name,
         'name': name,
         'isSelected': isSelected,
+        'webUrl': webUrl,
       };
 
   factory ContentItem.fromJson(Map<String, dynamic> json) => ContentItem(
@@ -31,6 +34,7 @@ class ContentItem {
         type: ContentType.values.firstWhere((e) => e.name == json['type']),
         name: json['name'] as String,
         isSelected: json['isSelected'] as bool? ?? true,
+        webUrl: json['webUrl'] as String?,
       );
 
   static List<ContentItem> listFromJson(String jsonStr) {

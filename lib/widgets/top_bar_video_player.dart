@@ -1,0 +1,103 @@
+import 'dart:async';
+import 'dart:io';
+import 'package:flutter/foundation.dart' show kIsWeb;
+import 'package:flutter/material.dart';
+import 'package:video_player/video_player.dart';
+import '../models/content_item.dart';
+import '../services/screen2_video_service.dart';
+
+class TopBarVideoPlayer extends StatefulWidget {
+  const TopBarVideoPlayer({super.key});
+
+  @override
+  State<TopBarVideoPlayer> createState() => _TopBarVideoPlayerState();
+}
+
+class _TopBarVideoPlayerState extends State<TopBarVideoPlayer> {
+  final _service = Screen2VideoService();
+  List<ContentItem> _items = [];
+  int _currentIndex = 0;
+  VideoPlayerController? _videoController;
+
+  @override
+  void initState() {
+    super.initState();
+    _loadService();
+  }
+
+  Future<void> _loadService() async {
+    await _service.load();
+    if (!mounted) return;
+    setState(() => _items = List.from(_service.items));
+    if (_items.isNotEmpty) _loadCurrent();
+  }
+
+  void _loadCurrent() {
+    _videoController?.dispose();
+    _videoController = null;
+
+    if (_items.isEmpty) return;
+    final item = _items[_currentIndex];
+
+    if (item.type == ContentType.video) {
+      if (kIsWeb) {
+        if (item.webUrl == null) return;
+        _videoController = VideoPlayerController.networkUrl(Uri.parse(item.webUrl!));
+      } else {
+        _videoController = VideoPlayerController.file(File(item.path));
+      }
+      _videoController!.initialize().then((_) {
+        if (!mounted) return;
+        _videoController!.setLooping(true);
+        _videoController!.play();
+        _videoController!.addListener(_onVideoListener);
+        setState(() {});
+      });
+    }
+  }
+
+  void _onVideoListener() {
+    final ctrl = _videoController;
+    if (ctrl == null) return;
+    if (ctrl.value.position >= ctrl.value.duration - const Duration(milliseconds: 300)) {
+      _next();
+    }
+  }
+
+  void _next() {
+    if (_items.isEmpty) return;
+    _currentIndex = (_currentIndex + 1) % _items.length;
+    _loadCurrent();
+  }
+
+  @override
+  void dispose() {
+    _videoController?.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    if (_items.isEmpty) {
+      return Container(
+        color: const Color(0xFF050516),
+        child: const Center(
+          child: Icon(Icons.tv, color: Color(0xFF333366), size: 48),
+        ),
+      );
+    }
+
+    if (_videoController?.value.isInitialized == true) {
+      return FittedBox(
+        fit: BoxFit.cover,
+        child: SizedBox(
+          width: _videoController!.value.size.width,
+          height: _videoController!.value.size.height,
+          child: VideoPlayer(_videoController!),
+        ),
+      );
+    }
+
+    return Container(color: Colors.black);
+  }
+}
