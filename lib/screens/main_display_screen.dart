@@ -1,5 +1,6 @@
 import 'dart:async';
 import 'dart:io';
+import 'dart:math';
 import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter/material.dart';
 import 'package:video_player/video_player.dart';
@@ -24,6 +25,7 @@ class _MainDisplayScreenState extends State<MainDisplayScreen> {
   final _wsServer = WebSocketServer();
 
   String _qrData = '';
+  String _sessionCode = '';
   String? _deviceIp;
   List<ContentItem> _items = [];
   int _currentIndex = 0;
@@ -44,8 +46,9 @@ class _MainDisplayScreenState extends State<MainDisplayScreen> {
     await _contentService.load();
     final ip = await _wsServer.start();
     _deviceIp = ip;
+    _sessionCode = (10000 + Random().nextInt(90000)).toString();
     setState(() {
-      _qrData = 'http://${ip ?? "0.0.0.0"}:${_wsServer.port}';
+      _qrData = 'http://${ip ?? "0.0.0.0"}:${_wsServer.port}?code=$_sessionCode';
       _items = _contentService.selectedItems;
     });
     _startContent();
@@ -245,6 +248,7 @@ class _MainDisplayScreenState extends State<MainDisplayScreen> {
           child: QrOverlayWidget(
             data: _qrData.isEmpty ? 'https://blinkboard.app' : _qrData,
             onStart: _enterScreenTwo,
+            sessionCode: _sessionCode,
           ),
         ),
       ),

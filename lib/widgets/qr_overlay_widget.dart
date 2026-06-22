@@ -5,8 +5,9 @@ import 'package:flutter_animate/flutter_animate.dart';
 class QrOverlayWidget extends StatelessWidget {
   final String data;
   final VoidCallback? onStart;
+  final String? sessionCode;
 
-  const QrOverlayWidget({super.key, required this.data, this.onStart});
+  const QrOverlayWidget({super.key, required this.data, this.onStart, this.sessionCode});
 
   @override
   Widget build(BuildContext context) {
@@ -61,6 +62,18 @@ class QrOverlayWidget extends StatelessWidget {
                     ],
                   ),
                 ),
+                if (sessionCode != null && sessionCode!.isNotEmpty) ...[
+                  const SizedBox(height: 4),
+                  Text(
+                    '#$sessionCode',
+                    style: const TextStyle(
+                      color: Colors.amber,
+                      fontSize: 13,
+                      fontWeight: FontWeight.w700,
+                      letterSpacing: 2,
+                    ),
+                  ),
+                ],
                 const SizedBox(height: 6),
                 if (onStart != null)
                   GestureDetector(
