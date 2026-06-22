@@ -35,6 +35,8 @@ class _MainDisplayScreenState extends State<MainDisplayScreen> {
   StreamSubscription? _wsSub;
   int _cornerTapCount = 0;
   Timer? _cornerTapTimer;
+  int? _countdownValue;
+  Timer? _countdownTimer;
 
   @override
   void initState() {
@@ -141,6 +143,23 @@ class _MainDisplayScreenState extends State<MainDisplayScreen> {
 
   void _enterScreenTwo() {
     if (!mounted) return;
+    setState(() => _countdownValue = 7);
+    _countdownTimer = Timer.periodic(const Duration(seconds: 1), _onCountdownTick);
+  }
+
+  void _onCountdownTick(Timer t) {
+    if (!mounted) { t.cancel(); return; }
+    if (_countdownValue == null) { t.cancel(); return; }
+    if (_countdownValue! <= 0) {
+      t.cancel();
+      _navigateToScreenTwo();
+      return;
+    }
+    setState(() => _countdownValue = _countdownValue! - 1);
+  }
+
+  void _navigateToScreenTwo() {
+    if (!mounted) return;
     Navigator.pushReplacement(
       context,
       PageRouteBuilder(
@@ -173,6 +192,7 @@ class _MainDisplayScreenState extends State<MainDisplayScreen> {
     _bgVideoController?.dispose();
     _videoController?.dispose();
     _contentTimer?.cancel();
+    _countdownTimer?.cancel();
     _wsSub?.cancel();
     _wsServer.stop();
     super.dispose();
@@ -188,6 +208,7 @@ class _MainDisplayScreenState extends State<MainDisplayScreen> {
           _buildContent(),
           _buildOverlay(),
           _buildCornerTapTarget(),
+          _buildCountdownOverlay(),
         ],
       ),
     );
@@ -249,6 +270,33 @@ class _MainDisplayScreenState extends State<MainDisplayScreen> {
             data: _qrData.isEmpty ? 'https://blinkboard.app' : _qrData,
             onStart: _enterScreenTwo,
             sessionCode: _sessionCode,
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildCountdownOverlay() {
+    if (_countdownValue == null) return const SizedBox.shrink();
+    return Positioned.fill(
+      child: Container(
+        color: Colors.black.withValues(alpha: 0.6),
+        child: Center(
+          child: AnimatedSwitcher(
+            duration: const Duration(milliseconds: 300),
+            transitionBuilder: (child, anim) => ScaleTransition(
+              scale: anim,
+              child: FadeTransition(opacity: anim, child: child),
+            ),
+            child: Text(
+              '$_countdownValue',
+              key: ValueKey(_countdownValue),
+              style: const TextStyle(
+                color: Colors.white,
+                fontSize: 120,
+                fontWeight: FontWeight.w900,
+              ),
+            ),
           ),
         ),
       ),
