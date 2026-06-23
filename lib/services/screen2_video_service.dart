@@ -21,7 +21,7 @@ class Screen2VideoService {
       _items = [
         ContentItem(
           id: 'top_default_2',
-          path: r'D:\Claude Projects\top (2).mp4',
+          path: 'assets/videos/top_bar.mp4',
           type: ContentType.video,
           name: 'top (2).mp4',
           webUrl: 'videos/top_2.mp4',

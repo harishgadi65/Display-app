@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import '../game/burger_catch_game.dart';
 import '../models/content_item.dart';
 import '../services/panel_video_service.dart';
+import '../services/websocket_server.dart';
 import '../widgets/panel_video_player.dart';
 import '../widgets/top_bar_video_player.dart';
 import 'main_display_screen.dart';
@@ -17,6 +18,8 @@ class ScreenTwo extends StatefulWidget {
 
 class _ScreenTwoState extends State<ScreenTwo> {
   late BurgerCatchGame _game;
+  final _wsServer = WebSocketServer();
+  StreamSubscription? _wsSub;
 
   bool _preGameCountdown = false;
   int _preGameCount = 3;
@@ -26,13 +29,37 @@ class _ScreenTwoState extends State<ScreenTwo> {
   void initState() {
     super.initState();
     _game = BurgerCatchGame(
-      onGameOver: (_) {},
-      onScoreUpdate: (_) {},
+      onGameOver: (s) => _wsServer.sendGameOver(s),
+      onScoreUpdate: (s) => _wsServer.sendScoreUpdate(s),
     );
+    _wsSub = _wsServer.messages.listen(_onWsMessage);
+  }
+
+  void _onWsMessage(WsMessage msg) {
+    switch (msg.type) {
+      case WsMessageType.moveLeft:
+        _game.startMoveLeft();
+        break;
+      case WsMessageType.stopMoveLeft:
+        _game.stopMoveLeft();
+        break;
+      case WsMessageType.moveRight:
+        _game.startMoveRight();
+        break;
+      case WsMessageType.stopMoveRight:
+        _game.stopMoveRight();
+        break;
+      case WsMessageType.playAgain:
+        _restartGame();
+        break;
+      default:
+        break;
+    }
   }
 
   @override
   void dispose() {
+    _wsSub?.cancel();
     _preGameTimer?.cancel();
     super.dispose();
   }
@@ -93,7 +120,7 @@ class _ScreenTwoState extends State<ScreenTwo> {
                       child: PanelVideoPlayer(
                         service: PanelVideoService('screen2_left', defaultItem: ContentItem(
                           id: 'left_1',
-                          path: r'D:\Claude Projects\left side.mp4',
+                          path: 'assets/videos/left_side.mp4',
                           type: ContentType.video,
                           name: 'left side.mp4',
                           webUrl: 'videos/left_side.mp4',
@@ -181,7 +208,7 @@ class _ScreenTwoState extends State<ScreenTwo> {
                       child: PanelVideoPlayer(
                         service: PanelVideoService('screen2_right', defaultItem: ContentItem(
                           id: 'right_1',
-                          path: r'D:\Claude Projects\right side.mp4',
+                          path: 'assets/videos/right_side.mp4',
                           type: ContentType.video,
                           name: 'right side.mp4',
                           webUrl: 'videos/right_side.mp4',
@@ -197,7 +224,7 @@ class _ScreenTwoState extends State<ScreenTwo> {
                 child: PanelVideoPlayer(
                   service: PanelVideoService('screen2_bottom', defaultItem: ContentItem(
                     id: 'bottom_1',
-                    path: r'D:\Claude Projects\Botom.mp4',
+                    path: 'assets/videos/bottom.mp4',
                     type: ContentType.video,
                     name: 'Botom.mp4',
                     webUrl: 'videos/bottom.mp4',

@@ -55,7 +55,9 @@ class _MainDisplayScreenState extends State<MainDisplayScreen> {
     });
     _startContent();
     _listenWebSocket();
-    await _initBackgroundVideo();
+    try {
+      await _initBackgroundVideo();
+    } catch (_) {}
   }
 
   Future<void> _initBackgroundVideo() async {
@@ -63,7 +65,7 @@ class _MainDisplayScreenState extends State<MainDisplayScreen> {
         ? VideoPlayerController.networkUrl(
             Uri.parse('videos/background_video.mp4'),
           )
-        : VideoPlayerController.asset('assets/videos/Background video.mp4');
+        : VideoPlayerController.asset('assets/videos/background_video.mp4');
     await _bgVideoController!.initialize();
     await _bgVideoController!.setVolume(0);
     _bgVideoController!.addListener(_onBgVideoProgress);
@@ -83,6 +85,8 @@ class _MainDisplayScreenState extends State<MainDisplayScreen> {
     _wsSub = _wsServer.messages.listen((msg) {
       if (msg.type == WsMessageType.startGame) {
         if (mounted) _enterGameMode();
+      } else if (msg.type == WsMessageType.startBurgerGame) {
+        if (mounted) _enterScreenTwo();
       }
     });
   }
@@ -194,7 +198,6 @@ class _MainDisplayScreenState extends State<MainDisplayScreen> {
     _contentTimer?.cancel();
     _countdownTimer?.cancel();
     _wsSub?.cancel();
-    _wsServer.stop();
     super.dispose();
   }
 

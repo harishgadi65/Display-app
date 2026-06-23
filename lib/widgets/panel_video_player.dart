@@ -44,13 +44,19 @@ class _PanelVideoPlayerState extends State<PanelVideoPlayer> {
         if (item.webUrl == null) return;
         _videoController = VideoPlayerController.networkUrl(Uri.parse(item.webUrl!));
       } else {
-        _videoController = VideoPlayerController.file(File(item.path));
+        if (item.path.isEmpty) return;
+        if (item.path.startsWith('assets/')) {
+          _videoController = VideoPlayerController.asset(item.path);
+        } else {
+          _videoController = VideoPlayerController.file(File(item.path));
+        }
       }
       _videoController!.initialize().then((_) {
         if (!mounted) return;
-        _videoController!.setLooping(true);
+        final shouldLoop = _items.length == 1;
+        _videoController!.setLooping(shouldLoop);
         _videoController!.play();
-        _videoController!.addListener(_onVideoListener);
+        if (!shouldLoop) _videoController!.addListener(_onVideoListener);
         setState(() {});
       });
     }
