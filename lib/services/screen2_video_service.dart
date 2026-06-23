@@ -16,19 +16,27 @@ class Screen2VideoService {
     final prefs = await SharedPreferences.getInstance();
     final json = prefs.getString(_key);
     if (json != null && json.isNotEmpty) {
-      _items = ContentItem.listFromJson(json);
-    } else {
-      _items = [
-        ContentItem(
-          id: 'top_default_2',
-          path: 'assets/videos/top_bar.mp4',
-          type: ContentType.video,
-          name: 'top (2).mp4',
-          webUrl: 'videos/top_2.mp4',
-        ),
-      ];
-      await _save();
+      final loaded = ContentItem.listFromJson(json);
+      final isValid = loaded.every((item) =>
+          item.path.isEmpty ||
+          item.path.startsWith('assets/') ||
+          item.path.startsWith('/'));
+      if (isValid) {
+        _items = loaded;
+        return;
+      }
+      await prefs.remove(_key);
     }
+    _items = [
+      ContentItem(
+        id: 'top_default_2',
+        path: 'assets/videos/top_bar.mp4',
+        type: ContentType.video,
+        name: 'top (2).mp4',
+        webUrl: 'videos/top_2.mp4',
+      ),
+    ];
+    await _save();
   }
 
   Future<void> _save() async {

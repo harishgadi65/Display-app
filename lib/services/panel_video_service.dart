@@ -20,9 +20,19 @@ class PanelVideoService {
     final prefs = await SharedPreferences.getInstance();
     final json = prefs.getString(_key);
     if (json != null && json.isNotEmpty) {
-      _items = ContentItem.listFromJson(json);
-    } else if (_defaultItem != null) {
-      _items = [_defaultItem];
+      final loaded = ContentItem.listFromJson(json);
+      final isValid = loaded.every((item) =>
+          item.path.isEmpty ||
+          item.path.startsWith('assets/') ||
+          item.path.startsWith('/'));
+      if (isValid) {
+        _items = loaded;
+        return;
+      }
+      await prefs.remove(_key);
+    }
+    if (_defaultItem != null) {
+      _items = [_defaultItem!];
       await _save();
     }
   }

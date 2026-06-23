@@ -66,34 +66,40 @@ class WebSocketServer {
 
   void _listen() async {
     await for (final request in _server!) {
-      if (WebSocketTransformer.isUpgradeRequest(request)) {
-        final socket = await WebSocketTransformer.upgrade(request);
-        _clientSocket?.close();
-        _clientSocket = socket;
-        socket.listen(
-          (data) {
-            try {
-              final json = jsonDecode(data as String) as Map<String, dynamic>;
-              _messageController.add(WsMessage.fromJson(json));
-            } catch (_) {}
-          },
-          onDone: () {
-            if (_clientSocket == socket) _clientSocket = null;
-          },
-          cancelOnError: false,
-        );
-      } else {
-        _serveControlPage(request);
-      }
+      _handleRequest(request);
     }
   }
 
-  void _serveControlPage(HttpRequest request) {
+  Future<void> _handleRequest(HttpRequest request) async {
+    if (WebSocketTransformer.isUpgradeRequest(request)) {
+      final socket = await WebSocketTransformer.upgrade(request);
+      _clientSocket?.close();
+      _clientSocket = socket;
+      socket.listen(
+        (data) {
+          try {
+            final json = jsonDecode(data as String) as Map<String, dynamic>;
+            _messageController.add(WsMessage.fromJson(json));
+          } catch (_) {}
+        },
+        onDone: () {
+          if (_clientSocket == socket) _clientSocket = null;
+        },
+        cancelOnError: false,
+      );
+    } else {
+      await _serveControlPage(request);
+    }
+  }
+
+  late final String _controlHtml = _mobileControlHtml();
+
+  Future<void> _serveControlPage(HttpRequest request) async {
     request.response
       ..statusCode = HttpStatus.ok
       ..headers.contentType = ContentType.html
-      ..write(_mobileControlHtml())
-      ..close();
+      ..write(_controlHtml);
+    await request.response.close();
   }
 
   String _mobileControlHtml() => '''<!DOCTYPE html>
