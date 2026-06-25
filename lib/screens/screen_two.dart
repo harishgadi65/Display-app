@@ -417,117 +417,114 @@ class _GameOverOverlayState extends State<_GameOverOverlay> {
   @override
   Widget build(BuildContext context) {
     return Container(
-      color: Colors.transparent,
+      decoration: BoxDecoration(
+        color: const Color(0xFF1A1A2E),
+        border: Border.all(color: Colors.orange.shade700, width: 3),
+      ),
+      padding: const EdgeInsets.symmetric(horizontal: 40, vertical: 24),
       child: Center(
-        child: Container(
-          width: 220,
-          padding: const EdgeInsets.fromLTRB(20, 1, 20, 16),
-          decoration: BoxDecoration(
-            color: const Color(0xFF1A1A2E),
-            borderRadius: BorderRadius.circular(20),
-            border: Border.all(color: Colors.orange.shade700, width: 2),
-          ),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              const Text('🍔', style: TextStyle(fontSize: 36)),
-              const SizedBox(height: 4),
-              const Text(
-                'GAME OVER',
-                style: TextStyle(
-                  color: Colors.white,
-                  fontSize: 18,
-                  fontWeight: FontWeight.w900,
-                  letterSpacing: 2,
-                ),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            const Text('🍔', style: TextStyle(fontSize: 56)),
+            const SizedBox(height: 6),
+            const Text(
+              'GAME OVER',
+              style: TextStyle(
+                color: Colors.white,
+                fontSize: 32,
+                fontWeight: FontWeight.w900,
+                letterSpacing: 2,
               ),
-              const SizedBox(height: 4),
-              const Divider(color: Colors.orange, thickness: 1),
-              const SizedBox(height: 12),
+            ),
+            const SizedBox(height: 6),
+            const Divider(color: Colors.orange, thickness: 1),
+            const SizedBox(height: 18),
 
-              // Burgers caught
-              const Text(
-                'Burgers Caught',
-                style: TextStyle(color: Colors.white60, fontSize: 12, letterSpacing: 1),
+            // Burgers caught
+            const Text(
+              'Burgers Caught',
+              style: TextStyle(color: Colors.white60, fontSize: 18, letterSpacing: 1),
+            ),
+            const SizedBox(height: 4),
+            Text(
+              '${widget.game.caughtCount}',
+              style: const TextStyle(
+                color: Color(0xFFFFD700),
+                fontSize: 72,
+                fontWeight: FontWeight.w900,
+                height: 1,
               ),
-              const SizedBox(height: 2),
-              Text(
-                '${widget.game.caughtCount}',
+            ),
+            const SizedBox(height: 8),
+
+            // Total score
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
+              decoration: BoxDecoration(
+                color: Colors.white10,
+                borderRadius: BorderRadius.circular(14),
+              ),
+              child: Row(
+                mainAxisSize: MainAxisSize.min,
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  const Text('Total Score',
+                      style: TextStyle(color: Colors.white60, fontSize: 18)),
+                  const SizedBox(width: 32),
+                  Text('${widget.game.score}',
+                      style: const TextStyle(
+                          color: Colors.white,
+                          fontSize: 28,
+                          fontWeight: FontWeight.w900)),
+                ],
+              ),
+            ),
+            const SizedBox(height: 12),
+
+            // Auto-return countdown number
+            AnimatedSwitcher(
+              duration: const Duration(milliseconds: 300),
+              transitionBuilder: (child, animation) => ScaleTransition(
+                scale: animation,
+                child: FadeTransition(opacity: animation, child: child),
+              ),
+              child: Text(
+                '$_countdown',
+                key: ValueKey(_countdown),
                 style: const TextStyle(
-                  color: Color(0xFFFFD700),
-                  fontSize: 40,
+                  color: Colors.white,
+                  fontSize: 96,
                   fontWeight: FontWeight.w900,
                   height: 1,
                 ),
               ),
-              const SizedBox(height: 4),
+            ),
+            const SizedBox(height: 12),
 
-              // Total score
-              Container(
-                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+            // Play Again button
+            GestureDetector(
+              onTap: _onPlayAgain,
+              child: Container(
+                width: 280,
+                padding: const EdgeInsets.symmetric(vertical: 20),
                 decoration: BoxDecoration(
-                  color: Colors.white10,
-                  borderRadius: BorderRadius.circular(10),
+                  color: Colors.orange,
+                  borderRadius: BorderRadius.circular(32),
                 ),
-                child: Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    const Text('Total Score',
-                        style: TextStyle(color: Colors.white60, fontSize: 12)),
-                    Text('${widget.game.score}',
-                        style: const TextStyle(
-                            color: Colors.white,
-                            fontSize: 16,
-                            fontWeight: FontWeight.w900)),
-                  ],
-                ),
-              ),
-              const SizedBox(height: 8),
-
-              // Auto-return countdown number
-              AnimatedSwitcher(
-                duration: const Duration(milliseconds: 300),
-                transitionBuilder: (child, animation) => ScaleTransition(
-                  scale: animation,
-                  child: FadeTransition(opacity: animation, child: child),
-                ),
-                child: Text(
-                  '$_countdown',
-                  key: ValueKey(_countdown),
-                  style: const TextStyle(
-                    color: Colors.white,
-                    fontSize: 44,
-                    fontWeight: FontWeight.w900,
-                    height: 1,
-                  ),
-                ),
-              ),
-              const SizedBox(height: 8),
-
-              // Play Again button
-              GestureDetector(
-                onTap: _onPlayAgain,
-                child: Container(
-                  width: double.infinity,
-                  padding: const EdgeInsets.symmetric(vertical: 12),
-                  decoration: BoxDecoration(
-                    color: Colors.orange,
-                    borderRadius: BorderRadius.circular(24),
-                  ),
-                  child: const Center(
-                    child: Text(
-                      '▶  Play Again',
-                      style: TextStyle(
-                        color: Colors.white,
-                        fontWeight: FontWeight.w900,
-                        fontSize: 15,
-                      ),
+                child: const Center(
+                  child: Text(
+                    '▶  Play Again',
+                    style: TextStyle(
+                      color: Colors.white,
+                      fontWeight: FontWeight.w900,
+                      fontSize: 22,
                     ),
                   ),
                 ),
               ),
-            ],
-          ),
+            ),
+          ],
         ),
       ),
     );
