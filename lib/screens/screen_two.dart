@@ -417,7 +417,7 @@ class _GameOverOverlayState extends State<_GameOverOverlay> {
   @override
   Widget build(BuildContext context) {
     return Container(
-      color: Colors.black.withOpacity(0.88),
+      color: Colors.transparent,
       child: Center(
         child: Container(
           width: 220,

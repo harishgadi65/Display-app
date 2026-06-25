@@ -1,7 +1,8 @@
-import 'dart:io';
+import 'dart:async';
 import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter/material.dart';
-import 'package:video_player/video_player.dart';
+import 'package:media_kit/media_kit.dart';
+import 'package:media_kit_video/media_kit_video.dart';
 import '../models/content_item.dart';
 import '../services/panel_video_service.dart';
 
@@ -17,7 +18,9 @@ class PanelVideoPlayer extends StatefulWidget {
 class _PanelVideoPlayerState extends State<PanelVideoPlayer> {
   List<ContentItem> _items = [];
   int _currentIndex = 0;
-  VideoPlayerController? _videoController;
+  Player? _player;
+  VideoController? _controller;
+  StreamSubscription? _completedSub;
 
   @override
   void initState() {
@@ -32,41 +35,43 @@ class _PanelVideoPlayerState extends State<PanelVideoPlayer> {
     if (_items.isNotEmpty) _loadCurrent();
   }
 
-  void _loadCurrent() {
-    _videoController?.dispose();
-    _videoController = null;
+  Future<void> _loadCurrent() async {
+    _completedSub?.cancel();
+    _completedSub = null;
+    await _player?.dispose();
+    _player = null;
+    _controller = null;
 
     if (_items.isEmpty) return;
     final item = _items[_currentIndex];
 
     if (item.type == ContentType.video) {
-      if (kIsWeb) {
-        if (item.webUrl == null) return;
-        _videoController = VideoPlayerController.networkUrl(Uri.parse(item.webUrl!));
-      } else {
-        if (item.path.isEmpty) return;
-        if (item.path.startsWith('assets/')) {
-          _videoController = VideoPlayerController.asset(item.path);
-        } else {
-          _videoController = VideoPlayerController.file(File(item.path));
-        }
-      }
-      _videoController!.initialize().then((_) {
-        if (!mounted) return;
-        final shouldLoop = _items.length == 1;
-        _videoController!.setLooping(shouldLoop);
-        _videoController!.play();
-        if (!shouldLoop) _videoController!.addListener(_onVideoListener);
-        setState(() {});
-      });
-    }
-  }
+      if (kIsWeb && item.webUrl == null) return;
+      if (!kIsWeb && item.path.isEmpty) return;
 
-  void _onVideoListener() {
-    final ctrl = _videoController;
-    if (ctrl == null) return;
-    if (ctrl.value.position >= ctrl.value.duration - const Duration(milliseconds: 300)) {
-      _next();
+      _player = Player();
+      _controller = VideoController(_player!);
+
+      final shouldLoop = _items.length == 1;
+      if (!shouldLoop) {
+        _completedSub = _player!.stream.completed.listen((done) {
+          if (done && mounted) _next();
+        });
+      }
+
+      Media media;
+      if (kIsWeb) {
+        media = Media(item.webUrl!);
+      } else if (item.path.startsWith('assets/')) {
+        media = Media('asset:///${item.path}');
+      } else {
+        media = Media(item.path);
+      }
+
+      await _player!.open(media);
+      if (shouldLoop) await _player!.setPlaylistMode(PlaylistMode.loop);
+      await _player!.play();
+      if (mounted) setState(() {});
     }
   }
 
@@ -78,7 +83,8 @@ class _PanelVideoPlayerState extends State<PanelVideoPlayer> {
 
   @override
   void dispose() {
-    _videoController?.dispose();
+    _completedSub?.cancel();
+    _player?.dispose();
     super.dispose();
   }
 
@@ -93,16 +99,13 @@ class _PanelVideoPlayerState extends State<PanelVideoPlayer> {
       );
     }
 
-    if (_videoController?.value.isInitialized == true) {
+    if (_controller != null) {
       return ClipRect(
         child: SizedBox.expand(
-          child: FittedBox(
+          child: Video(
+            controller: _controller!,
             fit: BoxFit.cover,
-            child: SizedBox(
-              width: _videoController!.value.size.width,
-              height: _videoController!.value.size.height,
-              child: VideoPlayer(_videoController!),
-            ),
+            fill: Colors.black,
           ),
         ),
       );

@@ -3,7 +3,8 @@ import 'dart:io';
 import 'dart:math';
 import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter/material.dart';
-import 'package:video_player/video_player.dart';
+import 'package:media_kit/media_kit.dart';
+import 'package:media_kit_video/media_kit_video.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import '../models/content_item.dart';
 import '../services/content_service.dart';
@@ -29,8 +30,15 @@ class _MainDisplayScreenState extends State<MainDisplayScreen> {
   String? _deviceIp;
   List<ContentItem> _items = [];
   int _currentIndex = 0;
-  VideoPlayerController? _videoController;
-  VideoPlayerController? _bgVideoController;
+
+  Player? _bgPlayer;
+  VideoController? _bgController;
+  StreamSubscription? _bgPositionSub;
+
+  Player? _contentPlayer;
+  VideoController? _contentController;
+  StreamSubscription? _contentCompletedSub;
+
   Timer? _contentTimer;
   StreamSubscription? _wsSub;
   int _cornerTapCount = 0;
@@ -61,23 +69,22 @@ class _MainDisplayScreenState extends State<MainDisplayScreen> {
   }
 
   Future<void> _initBackgroundVideo() async {
-    _bgVideoController = kIsWeb
-        ? VideoPlayerController.networkUrl(
-            Uri.parse('videos/background_video.mp4'),
-          )
-        : VideoPlayerController.asset('assets/videos/background_video.mp4');
-    await _bgVideoController!.initialize();
-    await _bgVideoController!.setVolume(0);
-    _bgVideoController!.addListener(_onBgVideoProgress);
-    await _bgVideoController!.play();
+    _bgPlayer = Player();
+    _bgController = VideoController(_bgPlayer!);
+    await _bgPlayer!.setVolume(0);
+    _bgPositionSub = _bgPlayer!.stream.position.listen(_onBgVideoProgress);
+    final media = kIsWeb
+        ? Media('videos/background_video.mp4')
+        : Media('asset:///assets/videos/background_video.mp4');
+    await _bgPlayer!.open(media);
+    await _bgPlayer!.setPlaylistMode(PlaylistMode.loop);
+    await _bgPlayer!.play();
     if (mounted) setState(() {});
   }
 
-  void _onBgVideoProgress() {
-    final ctrl = _bgVideoController;
-    if (ctrl == null || !ctrl.value.isInitialized) return;
-    if (ctrl.value.position >= const Duration(seconds: 8)) {
-      ctrl.seekTo(Duration.zero);
+  void _onBgVideoProgress(Duration position) {
+    if (position >= const Duration(seconds: 8)) {
+      _bgPlayer?.seek(Duration.zero);
     }
   }
 
@@ -97,33 +104,34 @@ class _MainDisplayScreenState extends State<MainDisplayScreen> {
     _loadCurrentContent();
   }
 
-  void _loadCurrentContent() {
-    _videoController?.dispose();
-    _videoController = null;
+  Future<void> _loadCurrentContent() async {
+    _contentCompletedSub?.cancel();
+    _contentCompletedSub = null;
+    await _contentPlayer?.dispose();
+    _contentPlayer = null;
+    _contentController = null;
     _contentTimer?.cancel();
 
     if (_items.isEmpty) return;
     final item = _items[_currentIndex];
 
     if (item.type == ContentType.video) {
-      _videoController = VideoPlayerController.file(File(item.path));
-      _videoController!.initialize().then((_) {
-        if (!mounted) return;
-        _videoController!.play();
-        _videoController!.addListener(_onVideoProgress);
-        setState(() {});
+      _contentPlayer = Player();
+      _contentController = VideoController(_contentPlayer!);
+      _contentCompletedSub = _contentPlayer!.stream.completed.listen((done) {
+        if (done && mounted) _nextContent();
       });
+      final media = kIsWeb
+          ? Media(item.webUrl ?? '')
+          : Media(item.path.startsWith('assets/')
+              ? 'asset:///${item.path}'
+              : item.path);
+      await _contentPlayer!.open(media);
+      await _contentPlayer!.play();
+      if (mounted) setState(() {});
     } else {
       _contentTimer = Timer(const Duration(seconds: 6), _nextContent);
-      setState(() {});
-    }
-  }
-
-  void _onVideoProgress() {
-    final ctrl = _videoController;
-    if (ctrl == null || !ctrl.value.isInitialized) return;
-    if (ctrl.value.position >= ctrl.value.duration - const Duration(milliseconds: 300)) {
-      _nextContent();
+      if (mounted) setState(() {});
     }
   }
 
@@ -193,8 +201,10 @@ class _MainDisplayScreenState extends State<MainDisplayScreen> {
 
   @override
   void dispose() {
-    _bgVideoController?.dispose();
-    _videoController?.dispose();
+    _bgPositionSub?.cancel();
+    _bgPlayer?.dispose();
+    _contentCompletedSub?.cancel();
+    _contentPlayer?.dispose();
     _contentTimer?.cancel();
     _countdownTimer?.cancel();
     _wsSub?.cancel();
@@ -218,15 +228,12 @@ class _MainDisplayScreenState extends State<MainDisplayScreen> {
   }
 
   Widget _buildBackground() {
-    if (_bgVideoController?.value.isInitialized == true) {
+    if (_bgController != null) {
       return SizedBox.expand(
-        child: FittedBox(
+        child: Video(
+          controller: _bgController!,
           fit: BoxFit.cover,
-          child: SizedBox(
-            width: _bgVideoController!.value.size.width,
-            height: _bgVideoController!.value.size.height,
-            child: VideoPlayer(_bgVideoController!),
-          ),
+          fill: Colors.black,
         ),
       );
     }
@@ -251,12 +258,9 @@ class _MainDisplayScreenState extends State<MainDisplayScreen> {
       );
     }
 
-    if (_videoController?.value.isInitialized == true) {
+    if (_contentController != null) {
       return Center(
-        child: AspectRatio(
-          aspectRatio: _videoController!.value.aspectRatio,
-          child: VideoPlayer(_videoController!),
-        ),
+        child: Video(controller: _contentController!),
       );
     }
 
